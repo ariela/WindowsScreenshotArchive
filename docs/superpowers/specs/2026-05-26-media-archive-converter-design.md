@@ -9,7 +9,8 @@
 
 ## 1. 概要
 
-Windows 上の指定ソースディレクトリ配下にある画像・動画ファイルを AVIF / AV1 に変換し、ディレクトリツリー構造を保ったまま NAS 上の指定ディレクトリへコピーする CLI ツール。  
+Windows 上の指定ソースディレクトリ配下にある画像・動画ファイルを AVIF / AV1 に変換し、ディレクトリツリー構造を保ったまま指定のコピー先ディレクトリへコピーする CLI ツール。  
+コピー先はローカルディレクトリ・外部ドライブ・NAS（UNC パス）など OS がアクセスできる任意のパスを指定できる。  
 変換完了後は元ファイルと変換中間ファイルを削除する。
 
 ---
@@ -21,7 +22,7 @@ Windows 上の指定ソースディレクトリ配下にある画像・動画フ
 | 対象画像形式 | `.jpg`, `.jpeg`, `.png` → `.avif` |
 | 対象動画形式 | `.mp4` → `.mkv` (AV1) |
 | 既存形式のパス変更 | `.avif` 画像 / AV1 動画は変換せずコピーのみ |
-| スキップ条件 | NAS の対応ディレクトリに同一ステム名のファイルが存在する場合 |
+| スキップ条件 | コピー先の対応ディレクトリに同一ステム名のファイルが存在する場合 |
 | ツリー構造維持 | コピー先は `dst / <src からの相対パス>` |
 | 元ファイル削除 | コピー成功後に元ファイルを削除 |
 | 一時ファイル削除 | コピー成功後に変換中間ファイルを削除 |
@@ -42,11 +43,11 @@ Windows 上の指定ソースディレクトリ配下にある画像・動画フ
        │
        ▼
   ② スキップ判定
-     NAS の対応ディレクトリ内に同一ステム名ファイルが存在すれば SKIP
+     コピー先の対応ディレクトリ内に同一ステム名ファイルが存在すれば SKIP
        │
        ├── 元が AVIF 画像 / AV1 動画
        │       ↓
-       │   ③ 直接コピー → NAS
+       │   ③ 直接コピー → コピー先
        │       ↓
        │   元ファイル削除
        │
@@ -54,7 +55,7 @@ Windows 上の指定ソースディレクトリ配下にある画像・動画フ
                ↓
            ④ 変換 (tmpDir 配下)
                ↓
-           ⑤ NAS へコピー
+           ⑤ コピー先へコピー
                ↓
            ⑥ 元ファイル + 一時ファイル削除
        │
@@ -68,7 +69,7 @@ Windows 上の指定ソースディレクトリ配下にある画像・動画フ
 
 - **画像変換**: goroutine worker pool で並列処理（デフォルト: CPU コア数、`--workers` で上書き可）
 - **動画変換**: シリアル実行（`av1_nvenc` が GPU を占有するため並列化しない）
-- **NAS コピー**: 変換完了ごとに逐次実行
+- **コピー先へのコピー**: 変換完了ごとに逐次実行
 
 ---
 
@@ -79,7 +80,7 @@ archive-convert.exe [OPTIONS]
 
 Options:
   --src      <path>    変換元ディレクトリ (必須)
-  --dst      <path>    コピー先ディレクトリ / NAS パス (必須)
+  --dst      <path>    コピー先ディレクトリ (ローカル・外部ドライブ・UNC パス等、OS がアクセスできる任意のパス) (必須)
   --workers  <int>     画像変換の並列数 (デフォルト: runtime.NumCPU())
   --log      <file>    ログファイルパス (省略時: stdout のみ)
   --dry-run           実際の変換/コピー/削除を行わずに処理予定を表示
@@ -92,10 +93,10 @@ Options:
 
 ```
 入力例: src_file = "D:\Screenshots\2024\foo.png"
-        dst_base = "\\NAS\Archive"
+        dst_base = "E:\Archive"  # ローカル・外部ドライブ・\\NAS\Archive など任意
 
 1. 相対パスを計算: "2024\foo.png"
-2. dst のディレクトリ: "\\NAS\Archive\2024\"
+2. dst のディレクトリ: "E:\Archive\2024\"
 3. そのディレクトリ内でステム "foo" を持つファイルを検索
    - "foo.avif" が存在 → SKIP
    - "foo.png"  が存在 → SKIP
@@ -143,14 +144,14 @@ ffmpeg -i input.mp4 \
 
 ```
 変換成功時:
-  tmpFile → (os.Copy) → NAS ファイル → (os.Remove) → tmpFile
-                                       → (os.Remove) → 元ファイル
+  tmpFile → (os.Copy) → コピー先ファイル → (os.Remove) → tmpFile
+                                           → (os.Remove) → 元ファイル
 
 変換失敗時:
   (os.Remove) → tmpFile
   元ファイルは保持
 
-NAS コピー失敗時:
+コピー失敗時:
   (os.Remove) → tmpFile
   元ファイルは保持
 ```
@@ -163,11 +164,11 @@ NAS コピー失敗時:
 ## 9. ログ形式
 
 ```
-[2026-05-26 10:23:01] SKIP   \\NAS\Archive\2024\foo.avif (already exists on dst)
+[2026-05-26 10:23:01] SKIP   E:\Archive\2024\foo.avif (already exists on dst)
 [2026-05-26 10:23:02] SKIP   D:\Screenshots\2024\bar.avif (already AVIF, will copy)
-[2026-05-26 10:23:03] COPY   D:\Screenshots\2024\bar.avif → \\NAS\Archive\2024\bar.avif
-[2026-05-26 10:23:05] CONV   D:\Screenshots\2024\baz.png → \\NAS\Archive\2024\baz.avif (2.3s)
-[2026-05-26 10:23:10] CONV   D:\Screenshots\video.mp4 → \\NAS\Archive\video.mkv (45.2s)
+[2026-05-26 10:23:03] COPY   D:\Screenshots\2024\bar.avif → E:\Archive\2024\bar.avif
+[2026-05-26 10:23:05] CONV   D:\Screenshots\2024\baz.png → E:\Archive\2024\baz.avif (2.3s)
+[2026-05-26 10:23:10] CONV   D:\Screenshots\video.mp4 → E:\Archive\video.mkv (45.2s)
 [2026-05-26 10:23:10] ERROR  D:\Screenshots\broken.jpg: ffmpeg exited with code 1: <stderr>
 [2026-05-26 10:23:10] DONE   processed=42 skipped=5 errors=1
 ```
@@ -190,7 +191,7 @@ WindowsScreenshotArchive/
 │   ├── walker/
 │   │   └── walker.go        # ディレクトリ再帰探索
 │   ├── skipper/
-│   │   └── skipper.go       # スキップ判定 (NAS ステム名検索)
+│   │   └── skipper.go       # スキップ判定 (コピー先ステム名検索)
 │   └── logger/
 │       └── logger.go        # ログ出力
 ├── go.mod
@@ -218,5 +219,5 @@ ffmpeg は PATH に存在するか、`--ffmpeg-path` で明示指定可能とす
 ## 12. 非機能要件・制約
 
 - 処理はすべてローカル完結（クラウドサービス不使用）
-- NAS へのアクセスは OS レベルのマウント済みパスとして扱う（SMB 認証はツール外）
+- コピー先はローカルパス・外部ドライブ・UNC パス（NAS 等）を問わず OS がアクセスできる任意のパスを受け付ける。SMB 認証などのマウント操作はツール外。
 - AVIF 変換の品質パラメータは現時点で ffmpeg デフォルトを使用（将来的に `--avif-quality` 追加を検討、現スコープ外）
