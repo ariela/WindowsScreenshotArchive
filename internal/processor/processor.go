@@ -159,7 +159,7 @@ func (p *Processor) handleImage(ctx context.Context, f walker.FileInfo) error {
 	if err != nil {
 		return err
 	}
-	defer os.Remove(tmpOut)
+	defer func() { _ = os.Remove(tmpOut) }()
 	if err := fileops.CopyFile(tmpOut, dstPath); err != nil {
 		return err
 	}
@@ -180,7 +180,7 @@ func (p *Processor) handleVideo(ctx context.Context, f walker.FileInfo) error {
 	if err != nil {
 		return err
 	}
-	defer os.Remove(tmpOut)
+	defer func() { _ = os.Remove(tmpOut) }()
 	if err := fileops.CopyFile(tmpOut, dstPath); err != nil {
 		return err
 	}

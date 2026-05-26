@@ -38,7 +38,7 @@ func main() {
 			fmt.Fprintf(os.Stderr, "error: cannot open log file: %v\n", err)
 			os.Exit(1)
 		}
-		defer f.Close()
+		defer func() { _ = f.Close() }()
 		secondary = f
 	}
 
@@ -47,7 +47,7 @@ func main() {
 		fmt.Fprintf(os.Stderr, "error: cannot create temp dir: %v\n", err)
 		os.Exit(1)
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() { _ = os.RemoveAll(tmpDir) }()
 
 	log := logger.New(os.Stdout, secondary)
 

@@ -37,8 +37,8 @@ func (l *Logger) write(level, msg string) {
 	)
 	l.mu.Lock()
 	defer l.mu.Unlock()
-	fmt.Fprint(l.primary, line)
+	_, _ = fmt.Fprint(l.primary, line)
 	if l.secondary != nil {
-		fmt.Fprint(l.secondary, line)
+		_, _ = fmt.Fprint(l.secondary, line)
 	}
 }

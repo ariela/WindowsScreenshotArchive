@@ -11,7 +11,9 @@ import (
 func TestHasSameStemFindsExisting(t *testing.T) {
 	dir := t.TempDir()
 	f, _ := os.Create(filepath.Join(dir, "photo.avif"))
-	f.Close()
+	if err := f.Close(); err != nil {
+		t.Fatal(err)
+	}
 
 	found, err := skipper.HasSameStem(dir, "photo")
 	if err != nil {
@@ -25,7 +27,9 @@ func TestHasSameStemFindsExisting(t *testing.T) {
 func TestHasSameStemReturnsFalseForMismatch(t *testing.T) {
 	dir := t.TempDir()
 	f, _ := os.Create(filepath.Join(dir, "other.avif"))
-	f.Close()
+	if err := f.Close(); err != nil {
+		t.Fatal(err)
+	}
 
 	found, err := skipper.HasSameStem(dir, "photo")
 	if err != nil {
@@ -49,7 +53,9 @@ func TestHasSameStemNonexistentDir(t *testing.T) {
 func TestHasSameStemMatchesDifferentExtension(t *testing.T) {
 	dir := t.TempDir()
 	f, _ := os.Create(filepath.Join(dir, "shot.png"))
-	f.Close()
+	if err := f.Close(); err != nil {
+		t.Fatal(err)
+	}
 
 	found, err := skipper.HasSameStem(dir, "shot")
 	if err != nil {
@@ -62,7 +68,9 @@ func TestHasSameStemMatchesDifferentExtension(t *testing.T) {
 
 func TestHasSameStemIgnoresDirectories(t *testing.T) {
 	dir := t.TempDir()
-	os.Mkdir(filepath.Join(dir, "photo"), 0755)
+	if err := os.Mkdir(filepath.Join(dir, "photo"), 0755); err != nil {
+		t.Fatal(err)
+	}
 
 	found, err := skipper.HasSameStem(dir, "photo")
 	if err != nil {

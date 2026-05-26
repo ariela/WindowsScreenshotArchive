@@ -18,7 +18,7 @@ func CopyFile(src, dst string) error {
 	if err != nil {
 		return err
 	}
-	defer in.Close()
+	defer func() { _ = in.Close() }()
 
 	tmp, err := os.CreateTemp(filepath.Dir(dst), ".tmp-*")
 	if err != nil {
@@ -27,19 +27,19 @@ func CopyFile(src, dst string) error {
 	tmpPath := tmp.Name()
 
 	if _, err := io.Copy(tmp, in); err != nil {
-		tmp.Close()
-		os.Remove(tmpPath)
+		_ = tmp.Close()
+		_ = os.Remove(tmpPath)
 		return err
 	}
 	if err := tmp.Close(); err != nil {
-		os.Remove(tmpPath)
+		_ = os.Remove(tmpPath)
 		return err
 	}
 
 	if err := os.Rename(tmpPath, dst); err != nil {
 		// クロスドライブの rename 失敗: コピー + 削除にフォールバック
 		if err2 := copyThenDelete(tmpPath, dst); err2 != nil {
-			os.Remove(tmpPath)
+			_ = os.Remove(tmpPath)
 			return err2
 		}
 	}
@@ -51,19 +51,19 @@ func copyThenDelete(src, dst string) error {
 	if err != nil {
 		return err
 	}
-	defer in.Close()
+	defer func() { _ = in.Close() }()
 
 	out, err := os.Create(dst)
 	if err != nil {
 		return err
 	}
 	if _, err := io.Copy(out, in); err != nil {
-		out.Close()
-		os.Remove(dst)
+		_ = out.Close()
+		_ = os.Remove(dst)
 		return err
 	}
 	if err := out.Close(); err != nil {
-		os.Remove(dst)
+		_ = os.Remove(dst)
 		return err
 	}
 	return os.Remove(src)

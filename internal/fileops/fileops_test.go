@@ -11,7 +11,9 @@ import (
 func TestCopyFileContent(t *testing.T) {
 	src := filepath.Join(t.TempDir(), "source.avif")
 	dst := filepath.Join(t.TempDir(), "dest.avif")
-	os.WriteFile(src, []byte("avif content"), 0644)
+	if err := os.WriteFile(src, []byte("avif content"), 0644); err != nil {
+		t.Fatal(err)
+	}
 
 	if err := fileops.CopyFile(src, dst); err != nil {
 		t.Fatal(err)
@@ -25,7 +27,9 @@ func TestCopyFileContent(t *testing.T) {
 func TestCopyFileCreatesIntermediateDirs(t *testing.T) {
 	src := filepath.Join(t.TempDir(), "src.avif")
 	dst := filepath.Join(t.TempDir(), "a", "b", "c", "dst.avif")
-	os.WriteFile(src, []byte("data"), 0644)
+	if err := os.WriteFile(src, []byte("data"), 0644); err != nil {
+		t.Fatal(err)
+	}
 
 	if err := fileops.CopyFile(src, dst); err != nil {
 		t.Fatal(err)

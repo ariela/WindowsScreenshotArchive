@@ -30,8 +30,12 @@ func newProc(t *testing.T, src, dst string, dryRun bool,
 func TestProcessorSkipsWhenDstStemExists(t *testing.T) {
 	src := t.TempDir()
 	dst := t.TempDir()
-	os.WriteFile(filepath.Join(src, "photo.jpg"), []byte("jpeg"), 0644)
-	os.WriteFile(filepath.Join(dst, "photo.avif"), []byte("exists"), 0644)
+	if err := os.WriteFile(filepath.Join(src, "photo.jpg"), []byte("jpeg"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dst, "photo.avif"), []byte("exists"), 0644); err != nil {
+		t.Fatal(err)
+	}
 
 	imgFake := &runner.FakeRunner{}
 	p := newProc(t, src, dst, false, imgFake, &runner.FakeRunner{}, &runner.FakeRunner{})
@@ -51,7 +55,9 @@ func TestProcessorSkipsWhenDstStemExists(t *testing.T) {
 func TestProcessorDryRunDoesNotCallFFmpeg(t *testing.T) {
 	src := t.TempDir()
 	dst := t.TempDir()
-	os.WriteFile(filepath.Join(src, "photo.jpg"), []byte("jpeg"), 0644)
+	if err := os.WriteFile(filepath.Join(src, "photo.jpg"), []byte("jpeg"), 0644); err != nil {
+		t.Fatal(err)
+	}
 
 	imgFake := &runner.FakeRunner{}
 	p := newProc(t, src, dst, true, imgFake, &runner.FakeRunner{}, &runner.FakeRunner{})
@@ -68,8 +74,12 @@ func TestProcessorDryRunDoesNotCallFFmpeg(t *testing.T) {
 func TestProcessorCountsProcessedAndErrors(t *testing.T) {
 	src := t.TempDir()
 	dst := t.TempDir()
-	os.WriteFile(filepath.Join(src, "ok.jpg"), []byte("jpeg"), 0644)
-	os.WriteFile(filepath.Join(src, "bad.png"), []byte("png"), 0644)
+	if err := os.WriteFile(filepath.Join(src, "ok.jpg"), []byte("jpeg"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(src, "bad.png"), []byte("png"), 0644); err != nil {
+		t.Fatal(err)
+	}
 
 	callCount := 0
 	imgFake := &runner.FakeRunner{}
