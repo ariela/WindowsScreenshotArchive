@@ -163,8 +163,11 @@ func (p *Processor) handleImage(ctx context.Context, f walker.FileInfo) error {
 	if err := fileops.CopyFile(tmpOut, dstPath); err != nil {
 		return err
 	}
+	if err := os.Remove(f.AbsPath); err != nil {
+		return err
+	}
 	p.log.Info("CONV", f.AbsPath+" → "+dstPath)
-	return os.Remove(f.AbsPath)
+	return nil
 }
 
 func (p *Processor) handleVideo(ctx context.Context, f walker.FileInfo) error {
@@ -181,8 +184,11 @@ func (p *Processor) handleVideo(ctx context.Context, f walker.FileInfo) error {
 	if err := fileops.CopyFile(tmpOut, dstPath); err != nil {
 		return err
 	}
+	if err := os.Remove(f.AbsPath); err != nil {
+		return err
+	}
 	p.log.Info("CONV", f.AbsPath+" → "+dstPath)
-	return os.Remove(f.AbsPath)
+	return nil
 }
 
 func (p *Processor) handleCopy(f walker.FileInfo) error {
@@ -194,8 +200,11 @@ func (p *Processor) handleCopy(f walker.FileInfo) error {
 	if err := fileops.CopyFile(f.AbsPath, dstPath); err != nil {
 		return err
 	}
+	if err := os.Remove(f.AbsPath); err != nil {
+		return err
+	}
 	p.log.Info("COPY", f.AbsPath+" → "+dstPath)
-	return os.Remove(f.AbsPath)
+	return nil
 }
 
 func stem(path string) string {

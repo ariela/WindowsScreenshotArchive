@@ -3,10 +3,12 @@ package logger
 import (
 	"fmt"
 	"io"
+	"sync"
 	"time"
 )
 
 type Logger struct {
+	mu        sync.Mutex
 	primary   io.Writer
 	secondary io.Writer
 }
@@ -33,6 +35,8 @@ func (l *Logger) write(level, msg string) {
 		level,
 		msg,
 	)
+	l.mu.Lock()
+	defer l.mu.Unlock()
 	fmt.Fprint(l.primary, line)
 	if l.secondary != nil {
 		fmt.Fprint(l.secondary, line)
