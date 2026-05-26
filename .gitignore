@@ -329,4 +329,7 @@ $RECYCLE.BIN/
 # Windows shortcuts
 *.lnk
 
+# Compiled binaries
+*.exe
+
 # End of https://www.toptal.com/developers/gitignore/api/windows,linux,macos,dotenv,direnv,visualstudiocode,intellij,intellij+iml,intellij+all
